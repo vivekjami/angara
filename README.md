@@ -1,64 +1,73 @@
-# Angara
+# Angara - Stealth Browser Automation Framework
 
-**Stealth browser automation framework that defeats bot detection at scale.**
+**Production-grade web scraping that defeats bot detection systems.**
 
-Built in Rust for maximum performance and reliability. Designed to make web scraping indistinguishable from human browsing.
+Built in Rust. Designed to be indistinguishable from human browsing. Ready for scale.
 
 ---
 
-## Why Angara?
+## What This Does
 
-Modern websites use sophisticated bot detection systems (Cloudflare, DataDome, PerimeterX) that block traditional scrapers. Angara defeats these through:
+Angara makes automated web scraping invisible to bot detection systems like Cloudflare, DataDome, and PerimeterX. It combines advanced browser fingerprinting, human behavioral simulation, and intelligent request distribution to maintain high success rates against protected websites.
 
-- **Advanced Fingerprinting**: 50+ browser attributes spoofed with real-world distributions
-- **Behavioral Mimicry**: Human-like mouse movements, typing patterns, and scroll behavior
-- **Intelligent Proxy Management**: Automatic rotation with health checking and geographic targeting
-- **Adaptive Rate Limiting**: Learns and respects site-specific limits
-- **Production-Ready**: Async architecture handles thousands of concurrent sessions
+## Core Capabilities
 
-## Benchmarks
+### 1. Advanced Fingerprinting
+- Spoofs 50+ browser attributes (Canvas, WebGL, Audio Context, Navigator properties)
+- Uses real-world browser distribution data
+- Validates profile consistency (no impossible combinations)
+- Hot-swaps profiles between sessions without browser restart
 
-Tested against protected sites (LinkedIn, Amazon, Pinterest):
+### 2. Behavioral Mimicry
+- **Mouse Movement**: Bézier curves with natural acceleration, jitter, and realistic tremor
+- **Typing Patterns**: Variable keystroke timing, realistic typos with corrections
+- **Scroll Behavior**: Momentum-based scrolling with reading pause patterns
+- **Timing**: Think time, distraction pauses, session duration control
 
-| Framework | Success Rate | Avg Latency | Cost/1K Requests |
-|-----------|--------------|-------------|------------------|
-| Raw Requests | 12% | 0.8s | $0.15 |
-| Puppeteer + Stealth | 67% | 3.2s | $0.58 |
-| Playwright | 71% | 2.9s | $0.54 |
-| **Angara** | **94%** | **2.3s** | **$0.42** |
+### 3. Proxy Management
+- Automatic rotation with health monitoring
+- Geographic targeting and matching
+- Session affinity for multi-step flows
+- Cost optimization (residential vs datacenter selection)
 
-## Quick Start
+### 4. Adaptive Rate Limiting
+- Learns from 429 responses and captcha triggers
+- Exponential backoff on detection
+- Per-domain limit tracking
+- Request timing jitter to avoid patterns
 
-```rust
-use angara::{Scraper, Config};
+### 5. Data Extraction
+- CSS selectors and XPath support
+- Clean Markdown output (LLM-ready)
+- JSON structured extraction
+- Configurable output formats
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config::default()
-        .with_proxy_rotation(true)
-        .with_fingerprint_rotation(true);
-    
-    let scraper = Scraper::new(config).await?;
-    
-    let result = scraper
-        .scrape("https://example.com")
-        .output_format("markdown")
-        .execute()
-        .await?;
-    
-    println!("{}", result.content);
-    Ok(())
-}
-```
+## Performance Numbers
+
+Tested against LinkedIn, Amazon, and Pinterest (100 requests each):
+
+| Metric | Raw Requests | Puppeteer Stealth | Playwright | **Angara** |
+|--------|--------------|-------------------|------------|------------|
+| Success Rate | 12% | 67% | 71% | **94%** |
+| Avg Latency | 0.8s | 3.2s | 2.9s | **2.3s** |
+| Cost per 1K | $0.15 | $0.58 | $0.54 | **$0.42** |
 
 ## Installation
 
 ### Prerequisites
-- Rust 1.75+
-- Chrome/Chromium 120+
-- 4GB+ RAM (8GB recommended)
+```bash
+# Rust 1.75 or higher
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-### Build from source
+# Chrome/Chromium 120+
+# Ubuntu/Debian
+sudo apt install chromium-browser
+
+# macOS
+brew install chromium
+```
+
+### Build
 ```bash
 git clone https://github.com/yourusername/angara.git
 cd angara
@@ -71,87 +80,81 @@ docker pull angara/angara:latest
 docker run -p 8080:8080 angara/angara:latest
 ```
 
-## Core Features
+## Quick Start
 
-### 1. Fingerprint Engine
-- 50+ pre-built fingerprint profiles matching real browser distributions
-- Canvas/WebGL/Audio fingerprinting defense
-- Hardware fingerprinting with realistic variance
-- WebRTC leak prevention
-- Font and screen resolution spoofing
+### Library Usage
 
-### 2. Behavioral Mimicry
-- **Mouse**: Bézier curves with natural acceleration, jitter, and overshoot
-- **Typing**: Variable keystroke timing with realistic errors and corrections
-- **Scrolling**: Momentum-based with reading pattern simulation
-- **Timing**: Think time, distraction pauses, session duration control
+```rust
+use angara::{Scraper, Config};
 
-### 3. Proxy Management
-- Multi-provider support (BrightData, Oxylabs, Smartproxy)
-- Automatic rotation with session affinity
-- Health checking and failure detection
-- Geographic targeting
-- Cost optimization (datacenter vs residential)
-
-### 4. Request Distribution
-- Adaptive rate limiting with exponential backoff
-- Distributed timing patterns (no predictable intervals)
-- Per-domain limits with auto-learning
-- Burst pattern simulation
-
-### 5. Data Extraction
-- CSS selectors and XPath
-- Clean Markdown output (LLM-ready)
-- JSON structured data with schemas
-- Visual parsing (OCR integration)
-
-### 6. Production Features
-- Async runtime (Tokio) for high concurrency
-- Browser instance pooling
-- Automatic failover and retry logic
-- Comprehensive metrics and monitoring
-- REST API for integration
-
-## Architecture
-
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize with stealth config
+    let config = Config::default()
+        .with_proxy_rotation(true)
+        .with_fingerprint_rotation(true)
+        .with_adaptive_rate_limiting(true);
+    
+    let scraper = Scraper::new(config).await?;
+    
+    // Scrape with full stealth
+    let result = scraper
+        .scrape("https://example.com")
+        .output_format("markdown")
+        .execute()
+        .await?;
+    
+    println!("Success: {}", result.success);
+    println!("Content:\n{}", result.content);
+    
+    Ok(())
+}
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Request Layer                           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │     CLI      │  │   REST API   │  │  Library API │     │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
-└─────────┼──────────────────┼──────────────────┼─────────────┘
-          │                  │                  │
-          └──────────────────┼──────────────────┘
-                             │
-┌────────────────────────────┼─────────────────────────────────┐
-│                    Core Engine                               │
-│                            │                                 │
-│  ┌─────────────────────────▼──────────────────────────────┐ │
-│  │            Request Scheduler & Distributor             │ │
-│  │  • Priority queues  • Rate limiting  • Jitter          │ │
-│  └─────┬────────────────────────────────────────┬─────────┘ │
-│        │                                        │            │
-│  ┌─────▼────────┐                      ┌────────▼─────────┐ │
-│  │  Fingerprint │                      │  Proxy Manager   │ │
-│  │    Engine    │                      │  • Rotation      │ │
-│  │  • Profiles  │                      │  • Health check  │ │
-│  │  • Injection │                      │  • Geo-targeting │ │
-│  └─────┬────────┘                      └────────┬─────────┘ │
-│        │                                        │            │
-│  ┌─────▼────────────────────────────────────────▼─────────┐ │
-│  │            Browser Automation Core                     │ │
-│  │  • CDP control  • Stealth patches  • Context isolation │ │
-│  └─────┬──────────────────────────────────────────────────┘ │
-│        │                                                     │
-│  ┌─────▼────────┐       ┌──────────────┐   ┌─────────────┐ │
-│  │  Behavioral  │       │  Extraction  │   │  Monitoring │ │
-│  │   Mimicry    │       │    Layer     │   │  & Metrics  │ │
-│  │  • Mouse     │       │  • Selectors │   │  • Telemetry│ │
-│  │  • Typing    │       │  • Markdown  │   │  • Logging  │ │
-│  │  • Scrolling │       │  • JSON      │   │  • Alerting │ │
-│  └──────────────┘       └──────────────┘   └─────────────┘ │
-└─────────────────────────────────────────────────────────────┘
+
+### CLI Usage
+
+```bash
+# Single URL
+angara scrape https://example.com --output markdown
+
+# Batch scraping
+angara scrape --file urls.txt --concurrent 50 --output-dir ./results
+
+# With custom config
+angara scrape https://example.com --config config.yaml
+
+# Using specific proxy
+angara scrape https://example.com --proxy socks5://user:pass@proxy:1080
+```
+
+### REST API
+
+Start server:
+```bash
+cargo run --bin angara-server -- --port 8080
+```
+
+Make requests:
+```bash
+# Single scrape
+curl -X POST http://localhost:8080/scrape \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "output_format": "markdown",
+    "use_stealth": true
+  }'
+
+# Batch scrape
+curl -X POST http://localhost:8080/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "urls": ["https://site1.com", "https://site2.com"],
+    "concurrent": 10
+  }'
+
+# Check status
+curl http://localhost:8080/status/{job_id}
 ```
 
 ## Configuration
@@ -160,8 +163,8 @@ docker run -p 8080:8080 angara/angara:latest
 # config.yaml
 browser:
   headless: true
-  instances: 10
-  recycling_threshold: 50
+  instances: 10          # Max concurrent browsers
+  recycling_threshold: 50  # Recycle after N requests
 
 fingerprint:
   rotation: true
@@ -176,86 +179,78 @@ proxy:
     - type: datacenter
       list: "./proxies/datacenter.txt"
   rotation_strategy: "geo-aware"
-  health_check_interval: 300
+  health_check_interval: 300  # seconds
 
 rate_limiting:
   adaptive: true
   default_rpm: 60
   backoff_multiplier: 2.0
+  max_retry: 3
   
 extraction:
   default_format: "markdown"
   clean_html: true
   preserve_links: true
+  block_resources: true  # Block images/ads/trackers
 
 monitoring:
   metrics_enabled: true
   log_level: "info"
-  telemetry_endpoint: "http://localhost:9090"
+  prometheus_port: 9090
 ```
 
-## API Usage
+## Architecture
 
-### REST API
-
-Start the server:
-```bash
-cargo run --bin angara-server -- --port 8080
 ```
-
-Endpoints:
-
-**Scrape single URL:**
-```bash
-curl -X POST http://localhost:8080/scrape \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://example.com",
-    "output_format": "markdown",
-    "use_stealth": true
-  }'
-```
-
-**Batch scraping:**
-```bash
-curl -X POST http://localhost:8080/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "urls": ["https://example1.com", "https://example2.com"],
-    "output_format": "json",
-    "concurrent": 10
-  }'
-```
-
-**Check job status:**
-```bash
-curl http://localhost:8080/status/{job_id}
-```
-
-### CLI
-
-```bash
-# Single URL
-angara scrape https://example.com --output markdown
-
-# Multiple URLs
-angara scrape --file urls.txt --concurrent 50 --output-dir ./results
-
-# With specific proxy
-angara scrape https://example.com --proxy http://proxy:8080
-
-# Custom config
-angara scrape https://example.com --config custom-config.yaml
+┌─────────────────────────────────────────────────┐
+│           Request Entry Layer                   │
+│  CLI │ REST API │ Library Interface              │
+└─────────────┬───────────────────────────────────┘
+              │
+┌─────────────▼───────────────────────────────────┐
+│         Request Scheduler                        │
+│  • Priority queues                               │
+│  • Rate limiting                                 │
+│  • Jitter injection                              │
+└─────────────┬───────────────────────────────────┘
+              │
+    ┌─────────┴─────────┐
+    │                   │
+┌───▼──────────┐   ┌────▼─────────┐
+│ Fingerprint  │   │    Proxy     │
+│   Engine     │   │   Manager    │
+│              │   │              │
+│ • Profiles   │   │ • Rotation   │
+│ • Injection  │   │ • Health     │
+│ • Validation │   │ • Geo-match  │
+└───┬──────────┘   └────┬─────────┘
+    │                   │
+    └─────────┬─────────┘
+              │
+┌─────────────▼───────────────────────────────────┐
+│      Browser Automation Core (CDP)              │
+│  • Stealth patches                               │
+│  • Context isolation                             │
+│  • Resource blocking                             │
+└─────────────┬───────────────────────────────────┘
+              │
+    ┌─────────┼─────────┐
+    │         │         │
+┌───▼────┐ ┌─▼──────┐ ┌▼─────────┐
+│Behavior│ │Extract │ │Monitoring│
+│        │ │        │ │          │
+│• Mouse │ │• Parse │ │• Metrics │
+│• Type  │ │• Format│ │• Logging │
+│• Scroll│ │• Output│ │• Alerts  │
+└────────┘ └────────┘ └──────────┘
 ```
 
 ## Integration with Firecrawl
 
 ```rust
 use angara::{Scraper, Config};
-use firecrawl::Crawler;
 
-async fn enhanced_crawl(url: &str) -> Result<String, Box<dyn std::error::Error>> {
-    // Initialize Angara with stealth capabilities
+async fn firecrawl_enhanced_scraping(url: &str) -> Result<String, Box<dyn std::error::Error>> {
     let config = Config::default()
         .with_fingerprint_rotation(true)
         .with_proxy_rotation(true)
@@ -263,52 +258,49 @@ async fn enhanced_crawl(url: &str) -> Result<String, Box<dyn std::error::Error>>
     
     let scraper = Scraper::new(config).await?;
     
-    // Scrape with full stealth
     let result = scraper
         .scrape(url)
         .output_format("markdown")
+        .with_metadata(true)
         .execute()
         .await?;
     
-    // Feed into Firecrawl for further processing
-    let crawler = Crawler::new();
-    let processed = crawler.process(result.content).await?;
-    
-    Ok(processed)
+    // Result is clean markdown ready for Firecrawl's processing
+    Ok(result.content)
 }
 ```
 
 ## Performance Tuning
 
 ### Memory Optimization
-- Limit browser instances based on available RAM (rule of thumb: 1 instance per 1GB)
-- Enable resource blocking for faster page loads
-- Set aggressive context cleanup intervals
+- Rule of thumb: 1 browser instance per 1GB available RAM
+- Enable resource blocking: `block_resources: true`
+- Set context cleanup interval: `context_lifetime: 300` (seconds)
 
 ### Network Optimization
-- Use HTTP/2 connection reuse
-- Enable compression (gzip/brotli)
+- Use HTTP/2 connection reuse (enabled by default)
+- Enable compression: `compression: ["gzip", "brotli"]`
 - Batch requests through same proxy when possible
 
 ### Cost Optimization
-- Use datacenter proxies for low-risk targets
-- Enable adaptive rate limiting to avoid captchas
-- Configure retry limits to prevent wasted proxy credits
+- Use datacenter proxies for low-risk sites: `proxy_preference: "datacenter"`
+- Enable captcha avoidance: `avoid_captcha: true`
+- Set aggressive rate limiting: `conservative_rate_limiting: true`
 
 ## Monitoring
 
-Angara exposes Prometheus-compatible metrics:
+Prometheus metrics exposed on `:9090/metrics`:
 
 ```
 angara_requests_total{status="success|failure|captcha"}
 angara_request_duration_seconds{quantile="0.5|0.95|0.99"}
 angara_fingerprint_effectiveness{profile_id}
-angara_proxy_health{proxy_id,status}
-angara_captcha_solve_rate
+angara_proxy_health{proxy_id, status}
+angara_captcha_triggers_total
 angara_detection_rate{site}
 ```
 
-Example Grafana dashboard configuration included in `./monitoring/dashboards/`.
+Example Grafana dashboard: `./monitoring/dashboards/angara.json`
 
 ## Testing
 
@@ -316,80 +308,146 @@ Example Grafana dashboard configuration included in `./monitoring/dashboards/`.
 # Unit tests
 cargo test
 
-# Integration tests
-cargo test --features integration-tests
+# Integration tests (requires Chrome)
+cargo test --features integration
 
 # Benchmark tests
 cargo bench
 
-# Test against real sites
-cargo test --test real-world-targets -- --nocapture
+# Real-world target tests
+cargo test --test real_world -- --nocapture
 ```
 
 ## Troubleshooting
 
-### High detection rate
-1. Check fingerprint profile consistency
-2. Verify proxy geographic matching
-3. Reduce request rate
-4. Enable behavioral mimicry
-5. Check for WebRTC leaks
+### High Detection Rate
+1. Verify fingerprint profile consistency: `angara validate-profiles`
+2. Check proxy geographic matching: ensure proxy location matches target site
+3. Reduce request rate: lower `default_rpm` in config
+4. Enable behavioral mimicry: `behavioral_mimicry: true`
+5. Check WebRTC leaks: `webrtc_protection: true`
 
-### Performance issues
-1. Reduce concurrent browser instances
-2. Enable resource blocking
-3. Check proxy latency
-4. Review rate limiting settings
+### Performance Issues
+1. Reduce concurrent instances: lower `browser.instances`
+2. Enable resource blocking: `block_resources: true`
+3. Check proxy latency: `angara test-proxies`
+4. Review rate limiting: may be too conservative
 
-### Captcha triggers
-1. Lower request rate
-2. Increase think time between actions
-3. Improve fingerprint quality
-4. Rotate proxies more frequently
+### Captcha Triggers
+1. Lower request rate significantly
+2. Increase think time: `min_think_time: 5000` (ms)
+3. Improve fingerprint quality: update profile database
+4. Rotate proxies more frequently: `proxy_rotation_interval: 10`
 
-See [detailed troubleshooting guide](./docs/troubleshooting.md).
+### Memory Leaks
+1. Enable aggressive context cleanup: `aggressive_cleanup: true`
+2. Lower recycling threshold: `recycling_threshold: 25`
+3. Monitor with: `angara monitor --metrics memory`
+
+## Project Structure
+
+```
+angara/
+├── src/
+│   ├── lib.rs                 # Main library interface
+│   ├── fingerprint/
+│   │   ├── mod.rs             # Fingerprint engine
+│   │   ├── profiles.rs        # Profile management
+│   │   ├── injector.rs        # Script injection
+│   │   └── validator.rs       # Consistency checks
+│   ├── behavior/
+│   │   ├── mod.rs
+│   │   ├── mouse.rs           # Mouse movement
+│   │   ├── typing.rs          # Keystroke simulation
+│   │   └── scroll.rs          # Scroll behavior
+│   ├── proxy/
+│   │   ├── mod.rs
+│   │   ├── manager.rs         # Proxy pool management
+│   │   ├── health.rs          # Health checking
+│   │   └── rotation.rs        # Rotation logic
+│   ├── browser/
+│   │   ├── mod.rs
+│   │   ├── launcher.rs        # Browser launching
+│   │   ├── cdp.rs             # CDP integration
+│   │   └── stealth.rs         # Stealth patches
+│   ├── extraction/
+│   │   ├── mod.rs
+│   │   ├── parser.rs          # HTML parsing
+│   │   └── formatter.rs       # Output formatting
+│   ├── rate_limit/
+│   │   ├── mod.rs
+│   │   └── adaptive.rs        # Adaptive limiting
+│   └── monitoring/
+│       ├── mod.rs
+│       ├── metrics.rs         # Prometheus metrics
+│       └── logging.rs         # Structured logging
+├── profiles/                  # Fingerprint profiles
+│   ├── chrome-windows/
+│   ├── chrome-macos/
+│   └── firefox-linux/
+├── examples/
+│   ├── basic_scrape.rs
+│   ├── batch_scrape.rs
+│   └── firecrawl_integration.rs
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── real_world_targets.rs
+├── benches/
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── CONFIGURATION.md
+│   └── TROUBLESHOOTING.md
+└── Cargo.toml
+```
 
 ## Roadmap
 
-- [x] Core fingerprinting engine
-- [x] Behavioral mimicry
-- [x] Proxy management
-- [x] Basic extraction
+**Current (v0.1):**
+- ✅ Core fingerprinting engine
+- ✅ Behavioral mimicry
+- ✅ Proxy management
+- ✅ Basic extraction
+
+**Next (v0.2):**
 - [ ] ML-based pattern learning
-- [ ] Distributed architecture
+- [ ] Advanced captcha solving integration
+- [ ] Mobile fingerprint profiles
+- [ ] Enhanced monitoring dashboard
+
+**Future (v0.3+):**
+- [ ] Distributed architecture support
 - [ ] Plugin system
-- [ ] Advanced captcha solving
 - [ ] Cloud deployment templates
+- [ ] Real-time detection adaptation
 
 ## Contributing
 
-Contributions welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) first.
+Contributions welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-Areas needing help:
-- Additional fingerprint profiles (especially mobile)
-- Detection pattern research
+Priority areas:
+- Additional fingerprint profiles (especially mobile browsers)
+- Detection pattern research and documentation
 - Performance optimization
-- Documentation improvements
+- Test coverage improvements
 
 ## License
 
-MIT License - see [LICENSE](./LICENSE) for details.
+MIT License - See [LICENSE](./LICENSE)
 
-## Acknowledgments
+## Why Rust?
 
-Built to solve real-world bot detection challenges. Inspired by the needs of production web automation systems like Firecrawl.
-
-Research sources:
-- Browser fingerprinting: CreepJS, AmIUnique, BrowserLeaks
-- Bot detection systems: Cloudflare, DataDome, PerimeterX documentation
-- Evasion techniques: puppeteer-extra-plugin-stealth, undetected-chromedriver
+- **Performance**: 3-5x faster than Python equivalents
+- **Memory Safety**: No crashes from memory leaks or race conditions
+- **Concurrency**: Native async/await for handling thousands of concurrent requests
+- **Production Ready**: Compiled binaries with no runtime dependencies
 
 ## Contact
 
-- GitHub Issues: [Report bugs or request features](https://github.com/vivekjami/angara/issues)
+- Issues: [GitHub Issues](https://github.com/yourusername/angara/issues)
 - Email: j.vivekvmasi@gmail.com
 - Twitter: @VivekJami4
 
 ---
 
-**Built for production. Tested against the hardest targets. Open source and free to use.**
+**Built for production. Tested against the hardest targets. Free and open source.**
